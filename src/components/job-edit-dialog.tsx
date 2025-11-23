@@ -1,6 +1,5 @@
+// src/components/job-edit-dialog.tsx
 "use client"
-
-import type React from "react"
 
 import { useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
@@ -36,231 +35,121 @@ export function JobEditDialog({ job, onClose, onSave, highlightField }: JobEditD
 
   const isHighlighted = (field: string) => field === highlightField
 
-  function renderFieldComparison(field: keyof Job, label: string, inputElement: React.ReactNode, currentValue: string) {
-    return (
-      <div
-        className={`space-y-2 ${isHighlighted(field) ? "p-3 bg-orange-50 dark:bg-orange-950/20 rounded-lg border border-orange-200 dark:border-orange-900" : ""}`}
-      >
-        <Label>{label}</Label>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <p className="text-xs text-muted-foreground mb-2">Current</p>
-            <div className="p-2 bg-muted rounded-md text-sm min-h-[40px] flex items-center">
-              {currentValue || <span className="text-destructive">Empty</span>}
-            </div>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground mb-2">New</p>
-            {inputElement}
-          </div>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit Job Record</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-1 gap-4 py-4">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="grid grid-cols-2 gap-6">
             {/* Job Number */}
-            {renderFieldComparison(
-              "job_number",
-              "Job Number",
-              <Input
-                id="job_number"
-                value={formData.job_number}
-                onChange={(e) => updateField("job_number", e.target.value)}
-              />,
-              job.job_number,
-            )}
-
-            {/* Bid Number */}
-            {renderFieldComparison(
-              "bid_number",
-              "Bid Number",
-              <Input
-                id="bid_number"
-                value={formData.bid_number}
-                onChange={(e) => updateField("bid_number", e.target.value)}
-              />,
-              job.bid_number,
-            )}
-
-            {/* Job Location */}
-            {renderFieldComparison(
-              "job_location",
-              "Job Location",
-              <Textarea
-                id="job_location"
-                value={formData.job_location}
-                onChange={(e) => updateField("job_location", e.target.value)}
-                rows={2}
-              />,
-              job.job_location,
-            )}
-
-            {/* Contractor */}
-            {renderFieldComparison(
-              "contractor",
-              "Contractor",
-              <Input
-                id="contractor"
-                value={formData.contractor}
-                onChange={(e) => updateField("contractor", e.target.value)}
-              />,
-              job.contractor,
-            )}
-
-            {/* Rate */}
-            {renderFieldComparison(
-              "rate",
-              "Rate",
-              <Input
-                id="rate"
-                type="number"
-                step="0.01"
-                value={formData.rate}
-                onChange={(e) => updateField("rate", e.target.value)}
-                placeholder="Enter rate"
-              />,
-              job.rate,
-            )}
-
-            {/* Fringe */}
-            {renderFieldComparison(
-              "fringe",
-              "Fringe",
-              <Input
-                id="fringe"
-                type="number"
-                step="0.01"
-                value={formData.fringe}
-                onChange={(e) => updateField("fringe", e.target.value)}
-                placeholder="Enter fringe"
-              />,
-              job.fringe,
-            )}
-
-            {/* Is Rated */}
-            {renderFieldComparison(
-              "is_rated",
-              "Is Rated",
-              <Select value={formData.is_rated} onValueChange={(value) => updateField("is_rated", value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="true">True</SelectItem>
-                  <SelectItem value="false">False</SelectItem>
-                </SelectContent>
-              </Select>,
-              job.is_rated,
-            )}
-
-            {/* Start Date */}
-            {renderFieldComparison(
-              "start_date",
-              "Start Date",
-              <Input
-                id="start_date"
-                type="date"
-                value={formData.start_date}
-                onChange={(e) => updateField("start_date", e.target.value)}
-              />,
-              job.start_date,
-            )}
-
-            {/* End Date */}
-            {renderFieldComparison(
-              "end_date",
-              "End Date",
-              <Input
-                id="end_date"
-                type="date"
-                value={formData.end_date}
-                onChange={(e) => updateField("end_date", e.target.value)}
-              />,
-              job.end_date,
-            )}
-
-            {/* Type */}
-            {renderFieldComparison(
-              "type",
-              "Type",
-              <Select value={formData.type} onValueChange={(value) => updateField("type", value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select type..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Public">Public</SelectItem>
-                  <SelectItem value="Private">Private</SelectItem>
-                </SelectContent>
-              </Select>,
-              job.type,
-            )}
-
-            {/* Office */}
-            {renderFieldComparison(
-              "office",
-              "Office",
-              <Input id="office" value={formData.office} onChange={(e) => updateField("office", e.target.value)} />,
-              job.office,
-            )}
+            <div className={isHighlighted("job_number") ? "ring-2 ring-orange-500 rounded-lg p-4" : ""}>
+              <Label>Job Number</Label>
+              <Input value={formData.combined_job_number || ""} disabled />
+            </div>
 
             {/* PM */}
-            {renderFieldComparison(
-              "pm",
-              "PM",
-              <Input id="pm" value={formData.pm} onChange={(e) => updateField("pm", e.target.value)} />,
-              job.pm,
-            )}
-
-            {/* Job Status */}
-            {renderFieldComparison(
-              "job_status",
-              "Job Status",
-              <Select value={formData.job_status} onValueChange={(value) => updateField("job_status", value)}>
+            <div className={isHighlighted("pm") ? "ring-2 ring-orange-500 rounded-lg p-4" : ""}>
+              <Label>Project Manager</Label>
+              <Select value={formData.pm} onValueChange={(v) => updateField("pm", v)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select status..." />
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="ON-GOING">On-Going</SelectItem>
-                  <SelectItem value="COMPLETE">Complete</SelectItem>
-                  <SelectItem value="PENDING">Pending</SelectItem>
-                  <SelectItem value="CANCELLED">Cancelled</SelectItem>
+                  <SelectItem value="John Nelson">John Nelson</SelectItem>
+                  <SelectItem value="Larry Long">Larry Long</SelectItem>
+                  <SelectItem value="Richard Gresh">Richard Gresh</SelectItem>
+                  <SelectItem value="Jim Redden">Jim Redden</SelectItem>
                 </SelectContent>
-              </Select>,
-              job.job_status,
-            )}
+              </Select>
+            </div>
 
-            {/* Sign Status */}
-            {renderFieldComparison(
-              "sign_status",
-              "Sign Status",
+            {/* Office */}
+            <div className={isHighlighted("office") ? "ring-2 ring-orange-500 rounded-lg p-4" : ""}>
+              <Label>Office</Label>
+              <Select value={formData.office} onValueChange={(v) => updateField("office", v)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="hatfield">Hatfield</SelectItem>
+                  <SelectItem value="bedford">Bedford</SelectItem>
+                  <SelectItem value="turbotville">Turbotville</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Type */}
+            <div className={isHighlighted("type") ? "ring-2 ring-orange-500 rounded-lg p-4" : ""}>
+              <Label>Type</Label>
+              <Select value={formData.type} onValueChange={(v) => updateField("type", v)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="public">Public</SelectItem>
+                  <SelectItem value="private">Private</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Job Status */}
+            <div className={isHighlighted("job_status") ? "ring-2 ring-orange-500 rounded-lg p-4" : ""}>
+              <Label>Job Status</Label>
+              <Select value={formData.job_status} onValueChange={(v) => updateField("job_status", v)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ongoing">Ongoing</SelectItem>
+                  <SelectItem value="not started">Not Started</SelectItem>
+                  <SelectItem value="complete">Complete</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Rate */}
+            <div className={isHighlighted("rate") ? "ring-2 ring-orange-500 rounded-lg p-4" : ""}>
+              <Label>Rate</Label>
               <Input
-                id="sign_status"
-                value={formData.sign_status}
-                onChange={(e) => updateField("sign_status", e.target.value)}
-              />,
-              job.sign_status,
-            )}
+                type="number"
+                step="0.01"
+                value={formData.rate || ""}
+                onChange={(e) => updateField("rate", e.target.value)}
+              />
+            </div>
 
-            {/* Remarks */}
-            {renderFieldComparison(
-              "remarks",
-              "Remarks",
-              <Textarea
-                id="remarks"
-                value={formData.remarks}
-                onChange={(e) => updateField("remarks", e.target.value)}
-                rows={3}
-              />,
-              job.remarks,
-            )}
+            {/* Fringe */}
+            <div className={isHighlighted("fringe") ? "ring-2 ring-orange-500 rounded-lg p-4" : ""}>
+              <Label>Fringe</Label>
+              <Input
+                type="number"
+                step="0.01"
+                value={formData.fringe || ""}
+                onChange={(e) => updateField("fringe", e.target.value)}
+              />
+            </div>
+
+            {/* Start Date */}
+            <div className={isHighlighted("start_date") ? "ring-2 ring-orange-500 rounded-lg p-4" : ""}>
+              <Label>Start Date</Label>
+              <Input
+                type="date"
+                value={formData.start_date || ""}
+                onChange={(e) => updateField("start_date", e.target.value)}
+              />
+            </div>
+
+            {/* End Date */}
+            <div className={isHighlighted("end_date") ? "ring-2 ring-orange-500 rounded-lg p-4" : ""}>
+              <Label>End Date</Label>
+              <Input
+                type="date"
+                value={formData.end_date || ""}
+                onChange={(e) => updateField("end_date", e.target.value)}
+              />
+            </div>
           </div>
 
           <DialogFooter>
