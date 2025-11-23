@@ -13,6 +13,7 @@ import { supabase } from "@/lib/supabase/client"
 export function JobCleaningDashboard() {
   const [jobs, setJobs] = useState<Job[]>([])
   const [totalJobs, setTotalJobs] = useState<number>(0)
+  const [validatedJobsCount, setValidatedJobsCount] = useState<number>(0)
   const [validationIssues, setValidationIssues] = useState<ValidationIssue[]>([])
   const [selectedIssue, setSelectedIssue] = useState<ValidationIssue | null>(null)
   const [selectedJob, setSelectedJob] = useState<Job | null>(null)
@@ -35,6 +36,17 @@ export function JobCleaningDashboard() {
   useEffect(() => {
     fetchJobs()
   }, [])
+
+  // Get the real validated count directly from clean table
+    useEffect(() => {
+    supabase
+        .from("etc_clean_jobs")
+        .select("id", { count: "exact", head: true })
+        .eq("fully_validated", true)
+        .then(({ count }) => {
+        if (count !== null) setValidatedJobsCount(count)
+        })
+    }, [])
 
   async function fetchJobs() {
     setLoading(true)
