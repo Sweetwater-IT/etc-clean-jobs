@@ -91,7 +91,7 @@ export function JobCleaningDashboard() {
           office_valid: c.office_valid,
           pm_valid: c.pm_valid,
           job_status_valid: c.job_status_valid,
-          fully_validated: c.fully_validated,
+          fully_validated: c.fully_validated === true,
         }
       })
 
