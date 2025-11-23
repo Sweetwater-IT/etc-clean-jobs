@@ -23,19 +23,48 @@ export function JobCleaningDashboard() {
     fetchJobs()
   }, [])
 
-  async function fetchJobs() {
-    setLoading(true)
-    try {
-      const response = await fetch("/api/jobs")
-      const data = await response.json()
-      setJobs(data)
-      calculateValidationIssues(data)
-    } catch (error) {
-      console.error("Failed to fetch jobs:", error)
-    } finally {
-      setLoading(false)
-    }
+// Inside JobCleaningDashboard.tsx — replace the old fetchJobs()
+async function fetchJobs() {
+  setLoading(true)
+  try {
+    const { data, error } = await supabase
+      .from("etc_dirty_jobs")
+      .select("*")
+      .order("id", { ascending: true })
+
+    if (error) throw error
+
+    // Map Supabase snake_case → your frontend camelCase
+    const jobs = data.map((job: any) => ({
+      id: job.id.toString(),
+      branch_prefix: job.branch_prefix,
+      type_prefix: job.type_prefix,
+      job_suffix: job.job_suffix,
+      combined_job_number: job.combined_job_number,
+      job_number: job.job_number || "",
+      bid_number: job.bid_number || "",
+      job_location: job.job_location,
+      contractor: job.contractor,
+      rate: job.rate || "",
+      fringe: job.fringe || "",
+      is_rated: job.is_rated || "n",
+      start_date: job.start_date || "",
+      end_date: job.end_date || "",
+      type: job.type,
+      office: job.office,
+      pm: job.pm?.trim() || "",
+      job_status: job.job_status?.trim() || "",
+      is_validated: job.is_validated || false,
+    }))
+
+    setJobs(jobs)
+    calculateValidationIssues(jobs)
+  } catch (error) {
+    console.error("Failed to fetch real jobs:", error)
+  } finally {
+    setLoading(false)
   }
+}
 
   function calculateValidationIssues(jobsData: Job[]) {
     const issues: ValidationIssue[] = []
