@@ -7,13 +7,15 @@ export const supabase = createServerClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
   {
     cookies: {
-      getAll() {
-        return cookies().getAll()
+      async getAll() {
+        const cookieStore = await cookies()
+        return cookieStore.getAll()
       },
-      setAll(cookiesToSet) {
+      async setAll(cookiesToSet) {
         try {
+          const cookieStore = await cookies()
           cookiesToSet.forEach(({ name, value, options }) => {
-            cookies().set(name, value, options)
+            cookieStore.set(name, value, options)
           })
         } catch {
           // ignored
