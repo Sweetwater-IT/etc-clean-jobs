@@ -245,9 +245,8 @@ async function fetchJobs() {
     setIsBulkEditOpen(false)
   }
 
-  const validatedJobsCount =
-    jobs.length - new Set(validationIssues.flatMap((issue) => issue.affectedJobs.map((job) => job.id))).size
-  const totalJobs = jobs.length
+    const totalJobs = jobs.length  // this is already 450 from dirty table
+    const validatedJobsCount = jobs.filter(job => job.fully_validated).length
 
   if (loading) {
     return (
