@@ -12,6 +12,7 @@ import { supabase } from "@/lib/supabase/client"
 
 export function JobCleaningDashboard() {
   const [jobs, setJobs] = useState<Job[]>([])
+  const [totalJobs, setTotalJobs] = useState<number>(0)
   const [validationIssues, setValidationIssues] = useState<ValidationIssue[]>([])
   const [selectedIssue, setSelectedIssue] = useState<ValidationIssue | null>(null)
   const [selectedJob, setSelectedJob] = useState<Job | null>(null)
@@ -20,87 +21,88 @@ export function JobCleaningDashboard() {
   const [bulkEditColumn, setBulkEditColumn] = useState<string>("")
   const [bulkEditJobs, setBulkEditJobs] = useState<Job[]>([])
 
+  // Get real total count from dirty table (never hardcoded)
+  useEffect(() => {
+    supabase
+      .from("etc_dirty_jobs")
+      .select("*", { count: "exact", head: true })
+      .then(({ count }) => {
+        if (count !== null) setTotalJobs(count)
+      })
+  }, [])
+
+  // Fetch merged clean + dirty data
   useEffect(() => {
     fetchJobs()
   }, [])
 
-async function fetchJobs() {
-  setLoading(true)
-  try {
-    const { data, error } = await supabase
-    .from("etc_clean_jobs")
-    .select(`
-        *,
-        dirty:etc_dirty_jobs!dirty_job_id (*)
-    `)
-    .order("dirty_job_id", { ascending: true })
+  async function fetchJobs() {
+    setLoading(true)
+    try {
+      const { data, error } = await supabase
+        .from("etc_clean_jobs")
+        .select(`
+          *,
+          dirty:etc_dirty_jobs!dirty_job_id (*)
+        `)
+        .order("dirty_job_id", { ascending: true })
 
-    if (error) throw error
+      if (error) throw error
 
-    const jobs = data.map((row: any) => {
-      const c = row
-      const d = row.dirty
+      const jobs = data.map((row: any) => {
+        const c = row
+        const d = row.dirty
 
-      // Convert dirty M/D/YYYY → YYYY-MM-DD
-      const toDate = (dirtyDate: string | null) => {
-        if (!dirtyDate || dirtyDate.trim() === "") return null
-        const [m, day, y] = dirtyDate.split("/")
-        return `${y}-${m.padStart(2, "0")}-${day.padStart(2, "0")}`
-      }
+        const toDate = (dirtyDate: string | null) => {
+          if (!dirtyDate || dirtyDate.trim() === "") return null
+          const [m, day, y] = dirtyDate.split("/")
+          return `${y}-${m.padStart(2, "0")}-${day.padStart(2, "0")}`
+        }
 
-      return {
-        id: c.dirty_job_id.toString(),
+        return {
+          id: c.dirty_job_id.toString(),
+          branch_prefix: c.branch_prefix_valid ? c.branch_prefix?.toString() : d.branch_prefix,
+          type_prefix: c.type_prefix_valid ? c.type_prefix?.toString() : d.type_prefix,
+          job_suffix: c.job_suffix_valid ? c.job_suffix : d.job_suffix,
+          combined_job_number: c.combined_job_number || d.combined_job_number,
+          job_number: d.job_number || "",
+          bid_number: c.bid_number_valid ? c.bid_number?.toString() : d.bid_number,
+          job_location: c.job_location || d.job_location,
+          contractor: c.contractor || d.contractor,
+          rate: c.rate_valid ? c.rate?.toFixed(2) : d.rate,
+          fringe: c.fringe_valid ? c.fringe?.toFixed(2) : d.fringe,
+          is_rated: c.is_rated_valid ? (c.is_rated ? "y" : "n") : d.is_rated,
+          start_date: c.start_date_valid ? c.start_date : toDate(d.start_date),
+          end_date: c.end_date_valid ? c.end_date : toDate(d.end_date),
+          type: c.type_valid ? c.type : d.type?.toLowerCase(),
+          office: c.office_valid ? c.office : d.office?.toLowerCase(),
+          pm: c.pm_valid ? c.pm : d.pm?.trim(),
+          job_status: c.job_status_valid ? c.job_status : d.job_status?.trim(),
+          branch_prefix_valid: c.branch_prefix_valid,
+          type_prefix_valid: c.type_prefix_valid,
+          job_suffix_valid: c.job_suffix_valid,
+          bid_number_valid: c.bid_number_valid,
+          rate_valid: c.rate_valid,
+          fringe_valid: c.fringe_valid,
+          is_rated_valid: c.is_rated_valid,
+          start_date_valid: c.start_date_valid,
+          end_date_valid: c.end_date_valid,
+          type_valid: c.type_valid,
+          office_valid: c.office_valid,
+          pm_valid: c.pm_valid,
+          job_status_valid: c.job_status_valid,
+          fully_validated: c.fully_validated,
+        }
+      })
 
-        // Core
-        branch_prefix: c.branch_prefix_valid ? c.branch_prefix?.toString() : d.branch_prefix,
-        type_prefix: c.type_prefix_valid ? c.type_prefix?.toString() : d.type_prefix,
-        job_suffix: c.job_suffix_valid ? c.job_suffix : d.job_suffix,
-        combined_job_number: c.combined_job_number || d.combined_job_number,
-
-        job_number: d.job_number || "",
-        bid_number: c.bid_number_valid ? c.bid_number?.toString() : d.bid_number,
-
-        job_location: c.job_location || d.job_location,
-        contractor: c.contractor || d.contractor,
-
-        rate: c.rate_valid ? c.rate?.toFixed(2) : d.rate,
-        fringe: c.fringe_valid ? c.fringe?.toFixed(2) : d.fringe,
-        is_rated: c.is_rated_valid ? (c.is_rated ? "y" : "n") : d.is_rated,
-
-        start_date: c.start_date_valid ? c.start_date : toDate(d.start_date),
-        end_date: c.end_date_valid ? c.end_date : toDate(d.end_date),
-
-        type: c.type_valid ? c.type : d.type?.toLowerCase(),
-        office: c.office_valid ? c.office : d.office?.toLowerCase(),
-        pm: c.pm_valid ? c.pm : d.pm?.trim(),
-        job_status: c.job_status_valid ? c.job_status : d.job_status?.trim(),
-
-        // Validation flags
-        branch_prefix_valid: c.branch_prefix_valid,
-        type_prefix_valid: c.type_prefix_valid,
-        job_suffix_valid: c.job_suffix_valid,
-        bid_number_valid: c.bid_number_valid,
-        rate_valid: c.rate_valid,
-        fringe_valid: c.fringe_valid,
-        is_rated_valid: c.is_rated_valid,
-        start_date_valid: c.start_date_valid,
-        end_date_valid: c.end_date_valid,
-        type_valid: c.type_valid,
-        office_valid: c.office_valid,
-        pm_valid: c.pm_valid,
-        job_status_valid: c.job_status_valid,
-        fully_validated: c.fully_validated,
-      }
-    })
-
-    setJobs(jobs)
-    calculateValidationIssues(jobs)
-  } catch (error) {
-    console.error("Failed to fetch jobs:", error)
-  } finally {
-    setLoading(false)
+      setJobs(jobs)
+      calculateValidationIssues(jobs)
+    } catch (error) {
+      console.error("Failed to fetch jobs:", error)
+    } finally {
+      setLoading(false)
+    }
   }
-}
 
   function calculateValidationIssues(jobsData: Job[]) {
     const issues: ValidationIssue[] = []
@@ -194,7 +196,7 @@ async function fetchJobs() {
     }
 
     const invalidIsRated = jobsData.filter(
-      (job) => job.is_rated !== "true" && job.is_rated !== "false" && job.is_rated !== "",
+      (job) => job.is_rated !== "y" && job.is_rated !== "n" && job.is_rated !== "",
     )
     if (invalidIsRated.length > 0) {
       issues.push({
@@ -245,8 +247,7 @@ async function fetchJobs() {
     setIsBulkEditOpen(false)
   }
 
-    const totalJobs = jobs.length  // this is already 450 from dirty table
-    const validatedJobsCount = jobs.filter(job => job.fully_validated).length
+  const validatedJobsCount = jobs.filter(job => job.fully_validated).length
 
   if (loading) {
     return (
@@ -265,7 +266,10 @@ async function fetchJobs() {
             <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
             <p className="text-sm text-muted-foreground">
               <span className="font-medium text-foreground">{validatedJobsCount}</span> of{" "}
-              <span className="font-medium text-foreground">{totalJobs}</span> jobs validated
+              <span className="font-medium text-foreground">
+                {totalJobs || jobs.length}
+              </span>{" "}
+              jobs validated
             </p>
           </div>
         </div>
@@ -308,6 +312,7 @@ async function fetchJobs() {
           ))}
         </div>
       )}
+
       <DataTable
         columns={columns}
         data={selectedIssue ? selectedIssue.affectedJobs : jobs}
