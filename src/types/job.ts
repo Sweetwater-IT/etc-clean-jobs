@@ -1,40 +1,49 @@
+// src/types/job.ts
 export interface Job {
   id: string
-  job_number: string
-  bid_number: string
+
+  // Core identifiers
+  branch_prefix: string
+  type_prefix: string
+  job_suffix: string
+  combined_job_number: string
+  job_number?: string
+  bid_number?: string
+
+  // Job details
   job_location: string
   contractor: string
-  rate: string
-  fringe: string
-  is_rated: string
-  start_date: string
-  end_date: string
+
+  // Financial
+  rate?: string
+  fringe?: string
+  is_rated?: string
+
+  // Dates
+  start_date?: string | null
+  end_date?: string | null
+
+  // Classification
   type: string
   office: string
   pm: string
   job_status: string
-  sign_status: string
-  "4_type_3": string
-  "6_type_3": string
-  "8_type_3": string
-  sq_post: string
-  h_stand: string
-  vp: string
-  sharps: string
-  y_b_lite: string
-  r_b_lite: string
-  w_b_lite: string
-  tma: string
-  c_lite: string
-  speed_trailer: string
-  arrow_board: string
-  message_board: string
-  uc_post: string
-  seq_light: string
-  remarks: string
-  last_updated_by: string
-  last_updated_at: string
-  created_at: string
+
+  // Validation flags (from clean table)
+  branch_prefix_valid?: boolean
+  type_prefix_valid?: boolean
+  job_suffix_valid?: boolean
+  bid_number_valid?: boolean
+  rate_valid?: boolean
+  fringe_valid?: boolean
+  is_rated_valid?: boolean
+  start_date_valid?: boolean
+  end_date_valid?: boolean
+  type_valid?: boolean
+  office_valid?: boolean
+  pm_valid?: boolean
+  job_status_valid?: boolean
+  fully_validated?: boolean
 }
 
 export interface ValidationIssue {
