@@ -48,6 +48,13 @@ export function JobCleaningDashboard() {
     fetchJobs()
   }, [])
 
+  // This runs EVERY time jobs change — guarantees issues are calculated
+    useEffect(() => {
+    if (jobs.length > 0) {
+        calculateValidationIssues(jobs)
+    }
+    }, [jobs])
+
   async function fetchJobs() {
     setLoading(true)
     try {
