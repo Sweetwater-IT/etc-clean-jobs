@@ -22,7 +22,7 @@ export function JobCleaningDashboard() {
   const [bulkEditColumn, setBulkEditColumn] = useState<string>("")
   const [bulkEditJobs, setBulkEditJobs] = useState<Job[]>([])
 
-  // Get real total count from dirty table (never hardcoded)
+  // Total jobs from dirty table
   useEffect(() => {
     supabase
       .from("etc_dirty_jobs")
@@ -32,28 +32,21 @@ export function JobCleaningDashboard() {
       })
   }, [])
 
-  // Fetch merged clean + dirty data
+  // Validated jobs from clean table
+  useEffect(() => {
+    supabase
+      .from("etc_clean_jobs")
+      .select("id", { count: "exact", head: true })
+      .eq("fully_validated", true)
+      .then(({ count }) => {
+        if (count !== null) setValidatedJobsCount(count)
+      })
+  }, [])
+
+  // Fetch all data
   useEffect(() => {
     fetchJobs()
   }, [])
-
-  // Get the real validated count directly from clean table
-    useEffect(() => {
-    supabase
-        .from("etc_clean_jobs")
-        .select("id", { count: "exact", head: true })
-        .eq("fully_validated", true)
-        .then(({ count }) => {
-        if (count !== null) setValidatedJobsCount(count)
-        })
-    }, [])
-
-    // ADD THIS:
-    useEffect(() => {
-    if (jobs.length > 0) {
-        calculateValidationIssues(jobs)
-    }
-    }, [jobs])
 
   async function fetchJobs() {
     setLoading(true)
@@ -68,54 +61,56 @@ export function JobCleaningDashboard() {
 
       if (error) throw error
 
-      const jobs = data.map((row: any) => {
+      const mappedJobs = data.map((row: any) => {
         const c = row
-        const d = row.dirty
+        const d = row.dirty || {}
 
-        const toDate = (dirtyDate: string | null) => {
-          if (!dirtyDate || dirtyDate.trim() === "") return null
-          const [m, day, y] = dirtyDate.split("/")
+        const toDate = (s: string | null) => {
+          if (!s?.trim()) return null
+          const [m, day, y] = s.split("/")
           return `${y}-${m.padStart(2, "0")}-${day.padStart(2, "0")}`
         }
 
         return {
-          id: c.dirty_job_id.toString(),
-          branch_prefix: c.branch_prefix_valid ? c.branch_prefix?.toString() : d.branch_prefix,
-          type_prefix: c.type_prefix_valid ? c.type_prefix?.toString() : d.type_prefix,
-          job_suffix: c.job_suffix_valid ? c.job_suffix : d.job_suffix,
-          combined_job_number: c.combined_job_number || d.combined_job_number,
+          id: c.dirty_job_id?.toString() || "0",
+          branch_prefix: c.branch_prefix_valid ? c.branch_prefix?.toString() : d.branch_prefix || "",
+          type_prefix: c.type_prefix_valid ? c.type_prefix?.toString() : d.type_prefix || "",
+          job_suffix: c.job_suffix_valid ? c.job_suffix : d.job_suffix || "",
+          combined_job_number: c.combined_job_number || d.combined_job_number || "",
           job_number: d.job_number || "",
-          bid_number: c.bid_number_valid ? c.bid_number?.toString() : d.bid_number,
-          job_location: c.job_location || d.job_location,
-          contractor: c.contractor || d.contractor,
-          rate: c.rate_valid ? c.rate?.toFixed(2) : d.rate,
-          fringe: c.fringe_valid ? c.fringe?.toFixed(2) : d.fringe,
-          is_rated: c.is_rated_valid ? (c.is_rated ? "y" : "n") : d.is_rated,
+          bid_number: c.bid_number_valid ? c.bid_number?.toString() : d.bid_number || "",
+          job_location: c.job_location || d.job_location || "",
+          contractor: c.contractor || d.contractor || "",
+          rate: c.rate_valid ? c.rate?.toFixed(2) : d.rate || "",
+          fringe: c.fringe_valid ? c.fringe?.toFixed(2) : d.fringe || "",
+          is_rated: c.is_rated_valid ? (c.is_rated ? "y" : "n") : d.is_rated || "n",
           start_date: c.start_date_valid ? c.start_date : toDate(d.start_date),
           end_date: c.end_date_valid ? c.end_date : toDate(d.end_date),
-          type: c.type_valid ? c.type : d.type?.toLowerCase(),
-          office: c.office_valid ? c.office : d.office?.toLowerCase(),
-          pm: c.pm_valid ? c.pm : d.pm?.trim(),
-          job_status: c.job_status_valid ? c.job_status : d.job_status?.trim(),
-          branch_prefix_valid: c.branch_prefix_valid,
-          type_prefix_valid: c.type_prefix_valid,
-          job_suffix_valid: c.job_suffix_valid,
-          bid_number_valid: c.bid_number_valid,
-          rate_valid: c.rate_valid,
-          fringe_valid: c.fringe_valid,
-          is_rated_valid: c.is_rated_valid,
-          start_date_valid: c.start_date_valid,
-          end_date_valid: c.end_date_valid,
-          type_valid: c.type_valid,
-          office_valid: c.office_valid,
-          pm_valid: c.pm_valid,
-          job_status_valid: c.job_status_valid,
-          fully_validated: c.fully_validated === true || c.fully_validated === "true",
+          type: c.type_valid ? c.type : d.type?.toLowerCase() || "",
+          office: c.office_valid ? c.office : d.office?.toLowerCase() || "",
+          pm: c.pm_valid ? c.pm : d.pm?.trim() || "",
+          job_status: c.job_status_valid ? c.job_status : d.job_status?.trim() || "",
+
+          // Validation flags
+          branch_prefix_valid: !!c.branch_prefix_valid,
+          type_prefix_valid: !!c.type_prefix_valid,
+          job_suffix_valid: !!c.job_suffix_valid,
+          bid_number_valid: !!c.bid_number_valid,
+          rate_valid: !!c.rate_valid,
+          fringe_valid: !!c.fringe_valid,
+          is_rated_valid: !!c.is_rated_valid,
+          start_date_valid: !!c.start_date_valid,
+          end_date_valid: !!c.end_date_valid,
+          type_valid: !!c.type_valid,
+          office_valid: !!c.office_valid,
+          pm_valid: !!c.pm_valid,
+          job_status_valid: !!c.job_status_valid,
+          fully_validated: c.fully_validated === true,
         }
       })
 
-      setJobs(jobs)
-      calculateValidationIssues(jobs)
+      setJobs(mappedJobs)
+      calculateValidationIssues(mappedJobs)
     } catch (error) {
       console.error("Failed to fetch jobs:", error)
     } finally {
@@ -123,110 +118,34 @@ export function JobCleaningDashboard() {
     }
   }
 
-    function calculateValidationIssues(jobsData: Job[]) {
+  function calculateValidationIssues(jobsData: Job[]) {
     const issues: ValidationIssue[] = []
 
-    const needsStartDate = jobsData.filter(j => !j.start_date_valid)
-    if (needsStartDate.length > 0) {
+    const addIssue = (field: keyof Job, label: string) => {
+      const invalid = jobsData.filter(j => !(j as any)[field + "_valid"])
+      if (invalid.length > 0) {
         issues.push({
-        field: "start_date",
-        label: "Start Date",
-        count: needsStartDate.length,
-        type: "missing",
-        affectedJobs: needsStartDate,
+          field,
+          label,
+          count: invalid.length,
+          type: "missing",
+          affectedJobs: invalid,
         })
+      }
     }
 
-    const needsEndDate = jobsData.filter(j => !j.end_date_valid)
-    if (needsEndDate.length > 0) {
-        issues.push({
-        field: "end_date",
-        label: "End Date",
-        count: needsEndDate.length,
-        type: "missing",
-        affectedJobs: needsEndDate,
-        })
-    }
-
-    const needsJobStatus = jobsData.filter(j => !j.job_status_valid)
-    if (needsJobStatus.length > 0) {
-        issues.push({
-        field: "job_status",
-        label: "Job Status",
-        count: needsJobStatus.length,
-        type: "missing",
-        affectedJobs: needsJobStatus,
-        })
-    }
-
-    const needsOffice = jobsData.filter(j => !j.office_valid)
-    if (needsOffice.length > 0) {
-        issues.push({
-        field: "office",
-        label: "Office",
-        count: needsOffice.length,
-        type: "missing",
-        affectedJobs: needsOffice,
-        })
-    }
-
-    const needsType = jobsData.filter(j => !j.type_valid)
-    if (needsType.length > 0) {
-        issues.push({
-        field: "type",
-        label: "Type",
-        count: needsType.length,
-        type: "missing",
-        affectedJobs: needsType,
-        })
-    }
-
-    const needsPM = jobsData.filter(j => !j.pm_valid)
-    if (needsPM.length > 0) {
-        issues.push({
-        field: "pm",
-        label: "Project Manager",
-        count: needsPM.length,
-        type: "missing",
-        affectedJobs: needsPM,
-        })
-    }
-
-    const needsRate = jobsData.filter(j => !j.rate_valid)
-    if (needsRate.length > 0) {
-        issues.push({
-        field: "rate",
-        label: "Rate",
-        count: needsRate.length,
-        type: "missing",
-        affectedJobs: needsRate,
-        })
-    }
-
-    const needsFringe = jobsData.filter(j => !j.fringe_valid)
-    if (needsFringe.length > 0) {
-        issues.push({
-        field: "fringe",
-        label: "Fringe",
-        count: needsFringe.length,
-        type: "missing",
-        affectedJobs: needsFringe,
-        })
-    }
-
-    const needsIsRated = jobsData.filter(j => !j.is_rated_valid)
-    if (needsIsRated.length > 0) {
-        issues.push({
-        field: "is_rated",
-        label: "Is Rated",
-        count: needsIsRated.length,
-        type: "missing",
-        affectedJobs: needsIsRated,
-        })
-    }
+    addIssue("start_date", "Start Date")
+    addIssue("end_date", "End Date")
+    addIssue("job_status", "Job Status")
+    addIssue("office", "Office")
+    addIssue("type", "Type")
+    addIssue("pm", "Project Manager")
+    addIssue("rate", "Rate")
+    addIssue("fringe", "Fringe")
+    addIssue("is_rated", "Is Rated")
 
     setValidationIssues(issues)
-    }
+  }
 
   async function handleJobUpdate(updatedJob: Job) {
     try {
@@ -265,7 +184,7 @@ export function JobCleaningDashboard() {
   }
 
 
-  if (loading) {
+if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -282,10 +201,7 @@ export function JobCleaningDashboard() {
             <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
             <p className="text-sm text-muted-foreground">
               <span className="font-medium text-foreground">{validatedJobsCount}</span> of{" "}
-              <span className="font-medium text-foreground">
-                {totalJobs || jobs.length}
-              </span>{" "}
-              jobs validated
+              <span className="font-medium text-foreground">{totalJobs || jobs.length}</span> jobs validated
             </p>
           </div>
         </div>
@@ -298,12 +214,7 @@ export function JobCleaningDashboard() {
               <span className="text-sm font-medium">
                 Showing {selectedIssue.affectedJobs.length} jobs with {selectedIssue.label} issues
               </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setSelectedIssue(null)}
-                className="h-6 px-2 text-xs hover:bg-orange-500/10 hover:text-orange-500"
-              >
+              <Button variant="ghost" size="sm" onClick={() => setSelectedIssue(null)}>
                 <X className="h-3 w-3 mr-1" />
                 Clear filter
               </Button>
