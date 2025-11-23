@@ -155,7 +155,7 @@ export function JobCleaningDashboard() {
     const needsOffice = jobsData.filter(j => !j.office_valid)
     if (needsOffice.length > 0) {
         issues.push({
-        field: " "office",
+        field: "office",
         label: "Office",
         count: needsOffice.length,
         type: "missing",
