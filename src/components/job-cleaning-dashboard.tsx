@@ -116,112 +116,110 @@ export function JobCleaningDashboard() {
     }
   }
 
-  function calculateValidationIssues(jobsData: Job[]) {
+    function calculateValidationIssues(jobsData: Job[]) {
     const issues: ValidationIssue[] = []
 
-    const missingStartDate = jobsData.filter((job) => !job.start_date || job.start_date.trim() === "")
-    if (missingStartDate.length > 0) {
-      issues.push({
+    const needsStartDate = jobsData.filter(j => !j.start_date_valid)
+    if (needsStartDate.length > 0) {
+        issues.push({
         field: "start_date",
         label: "Start Date",
-        count: missingStartDate.length,
+        count: needsStartDate.length,
         type: "missing",
-        affectedJobs: missingStartDate,
-      })
+        affectedJobs: needsStartDate,
+        })
     }
 
-    const missingEndDate = jobsData.filter((job) => !job.end_date || job.end_date.trim() === "")
-    if (missingEndDate.length > 0) {
-      issues.push({
+    const needsEndDate = jobsData.filter(j => !j.end_date_valid)
+    if (needsEndDate.length > 0) {
+        issues.push({
         field: "end_date",
         label: "End Date",
-        count: missingEndDate.length,
+        count: needsEndDate.length,
         type: "missing",
-        affectedJobs: missingEndDate,
-      })
+        affectedJobs: needsEndDate,
+        })
     }
 
-    const missingJobStatus = jobsData.filter((job) => !job.job_status || job.job_status.trim() === "")
-    if (missingJobStatus.length > 0) {
-      issues.push({
+    const needsJobStatus = jobsData.filter(j => !j.job_status_valid)
+    if (needsJobStatus.length > 0) {
+        issues.push({
         field: "job_status",
         label: "Job Status",
-        count: missingJobStatus.length,
+        count: needsJobStatus.length,
         type: "missing",
-        affectedJobs: missingJobStatus,
-      })
+        affectedJobs: needsJobStatus,
+        })
     }
 
-    const missingOffice = jobsData.filter((job) => !job.office || job.office.trim() === "")
-    if (missingOffice.length > 0) {
-      issues.push({
-        field: "office",
+    const needsOffice = jobsData.filter(j => !j.office_valid)
+    if (needsOffice.length > 0) {
+        issues.push({
+        field: " "office",
         label: "Office",
-        count: missingOffice.length,
+        count: needsOffice.length,
         type: "missing",
-        affectedJobs: missingOffice,
-      })
+        affectedJobs: needsOffice,
+        })
     }
 
-    const missingType = jobsData.filter((job) => !job.type || job.type.trim() === "")
-    if (missingType.length > 0) {
-      issues.push({
+    const needsType = jobsData.filter(j => !j.type_valid)
+    if (needsType.length > 0) {
+        issues.push({
         field: "type",
         label: "Type",
-        count: missingType.length,
+        count: needsType.length,
         type: "missing",
-        affectedJobs: missingType,
-      })
+        affectedJobs: needsType,
+        })
     }
 
-    const missingPM = jobsData.filter((job) => !job.pm || job.pm.trim() === "")
-    if (missingPM.length > 0) {
-      issues.push({
+    const needsPM = jobsData.filter(j => !j.pm_valid)
+    if (needsPM.length > 0) {
+        issues.push({
         field: "pm",
         label: "Project Manager",
-        count: missingPM.length,
+        count: needsPM.length,
         type: "missing",
-        affectedJobs: missingPM,
-      })
+        affectedJobs: needsPM,
+        })
     }
 
-    const invalidRate = jobsData.filter((job) => job.rate && isNaN(Number.parseFloat(job.rate)))
-    if (invalidRate.length > 0) {
-      issues.push({
+    const needsRate = jobsData.filter(j => !j.rate_valid)
+    if (needsRate.length > 0) {
+        issues.push({
         field: "rate",
         label: "Rate",
-        count: invalidRate.length,
-        type: "invalid",
-        affectedJobs: invalidRate,
-      })
+        count: needsRate.length,
+        type: "missing",
+        affectedJobs: needsRate,
+        })
     }
 
-    const invalidFringe = jobsData.filter((job) => job.fringe && isNaN(Number.parseFloat(job.fringe)))
-    if (invalidFringe.length > 0) {
-      issues.push({
+    const needsFringe = jobsData.filter(j => !j.fringe_valid)
+    if (needsFringe.length > 0) {
+        issues.push({
         field: "fringe",
         label: "Fringe",
-        count: invalidFringe.length,
-        type: "invalid",
-        affectedJobs: invalidFringe,
-      })
+        count: needsFringe.length,
+        type: "missing",
+        affectedJobs: needsFringe,
+        })
     }
 
-    const invalidIsRated = jobsData.filter(
-      (job) => job.is_rated !== "y" && job.is_rated !== "n" && job.is_rated !== "",
-    )
-    if (invalidIsRated.length > 0) {
-      issues.push({
+    const needsIsRated = jobsData.filter(j => !j.is_rated_valid)
+    if (needsIsRated.length > 0) {
+        issues.push({
         field: "is_rated",
         label: "Is Rated",
-        count: invalidIsRated.length,
-        type: "invalid",
-        affectedJobs: invalidIsRated,
-      })
+        count: needsIsRated.length,
+        type: "missing",
+        affectedJobs: needsIsRated,
+        })
     }
 
     setValidationIssues(issues)
-  }
+    }
 
   async function handleJobUpdate(updatedJob: Job) {
     try {
