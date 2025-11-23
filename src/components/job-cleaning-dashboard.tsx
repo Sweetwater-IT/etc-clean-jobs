@@ -8,6 +8,7 @@ import { BulkEditDialog } from "@/components/bulk-edit-dialog"
 import { DataTable } from "@/components/data-table"
 import { columns } from "@/components/columns"
 import type { Job, ValidationIssue } from "@/types/job"
+import { supabase } from "@/lib/supabase/client"
 
 export function JobCleaningDashboard() {
   const [jobs, setJobs] = useState<Job[]>([])
