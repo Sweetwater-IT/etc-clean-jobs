@@ -28,12 +28,12 @@ async function fetchJobs() {
   setLoading(true)
   try {
     const { data, error } = await supabase
-      .from("etc_clean_jobs")
-      .select(`
+    .from("etc_clean_jobs")
+    .select(`
         *,
-        dirty:etc_dirty_jobs (*)
-      `)
-      .order("dirty_job_id", { ascending: true })
+        dirty:etc_dirty_jobs!dirty_job_id (*)
+    `)
+    .order("dirty_job_id", { ascending: true })
 
     if (error) throw error
 
