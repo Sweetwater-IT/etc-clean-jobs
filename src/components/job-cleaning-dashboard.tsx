@@ -22,18 +22,18 @@ export function JobCleaningDashboard() {
   const [bulkEditColumn, setBulkEditColumn] = useState<string>("")
   const [bulkEditJobs, setBulkEditJobs] = useState<Job[]>([])
 
-  // Total jobs from dirty table
-  useEffect(() => {
+// Total jobs from dirty table
+useEffect(() => {
     supabase
-      .from("etc_dirty_jobs")
-      .select("*", { count: "exact", head: true })
-      .then(({ count }) => {
+        .from("etc_dirty_jobs")
+        .select("*", { count: "exact", head: true })
+        .then(({ count }) => {
         if (count !== null) setTotalJobs(count)
-      })
-  }, [])
+        })
+}, [])
 
-  // Validated jobs from clean table
-  useEffect(() => {
+// Validated jobs from clean table
+useEffect(() => {
     supabase
       .from("etc_clean_jobs")
       .select("id", { count: "exact", head: true })
@@ -41,12 +41,12 @@ export function JobCleaningDashboard() {
       .then(({ count }) => {
         if (count !== null) setValidatedJobsCount(count)
       })
-  }, [])
+}, [])
 
-  // Fetch all data
-  useEffect(() => {
+// Fetch all data
+useEffect(() => {
     fetchJobs()
-  }, [])
+}, [])
 
   // This runs EVERY time jobs change — guarantees issues are calculated
     useEffect(() => {
