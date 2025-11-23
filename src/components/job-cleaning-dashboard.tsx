@@ -35,7 +35,6 @@ async function fetchJobs() {
 
     if (error) throw error
 
-import { supabase } from "@/lib/supabase/client"
 
 async function fetchJobs() {
   setLoading(true)
