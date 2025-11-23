@@ -24,18 +24,6 @@ export function JobCleaningDashboard() {
     fetchJobs()
   }, [])
 
-// Inside JobCleaningDashboard.tsx — replace the old fetchJobs()
-async function fetchJobs() {
-  setLoading(true)
-  try {
-    const { data, error } = await supabase
-      .from("etc_dirty_jobs")
-      .select("*")
-      .order("id", { ascending: true })
-
-    if (error) throw error
-
-
 async function fetchJobs() {
   setLoading(true)
   try {
