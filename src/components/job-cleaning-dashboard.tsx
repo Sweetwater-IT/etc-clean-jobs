@@ -259,7 +259,6 @@ export function JobCleaningDashboard() {
     setIsBulkEditOpen(false)
   }
 
-  const validatedJobsCount = jobs.filter(job => job.fully_validated).length
 
   if (loading) {
     return (
