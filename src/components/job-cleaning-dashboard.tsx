@@ -48,6 +48,13 @@ export function JobCleaningDashboard() {
         })
     }, [])
 
+    // ADD THIS:
+    useEffect(() => {
+    if (jobs.length > 0) {
+        calculateValidationIssues(jobs)
+    }
+    }, [jobs])
+
   async function fetchJobs() {
     setLoading(true)
     try {
