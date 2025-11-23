@@ -35,33 +35,81 @@ async function fetchJobs() {
 
     if (error) throw error
 
-    // Map Supabase snake_case → your frontend camelCase
-    const jobs = data.map((job: any) => ({
-      id: job.id.toString(),
-      branch_prefix: job.branch_prefix,
-      type_prefix: job.type_prefix,
-      job_suffix: job.job_suffix,
-      combined_job_number: job.combined_job_number,
-      job_number: job.job_number || "",
-      bid_number: job.bid_number || "",
-      job_location: job.job_location,
-      contractor: job.contractor,
-      rate: job.rate || "",
-      fringe: job.fringe || "",
-      is_rated: job.is_rated || "n",
-      start_date: job.start_date || "",
-      end_date: job.end_date || "",
-      type: job.type,
-      office: job.office,
-      pm: job.pm?.trim() || "",
-      job_status: job.job_status?.trim() || "",
-      is_validated: job.is_validated || false,
-    }))
+import { supabase } from "@/lib/supabase/client"
+
+async function fetchJobs() {
+  setLoading(true)
+  try {
+    const { data, error } = await supabase
+      .from("etc_clean_jobs")
+      .select(`
+        *,
+        dirty:etc_dirty_jobs (*)
+      `)
+      .order("dirty_job_id", { ascending: true })
+
+    if (error) throw error
+
+    const jobs = data.map((row: any) => {
+      const c = row
+      const d = row.dirty
+
+      // Convert dirty M/D/YYYY → YYYY-MM-DD
+      const toDate = (dirtyDate: string | null) => {
+        if (!dirtyDate || dirtyDate.trim() === "") return null
+        const [m, day, y] = dirtyDate.split("/")
+        return `${y}-${m.padStart(2, "0")}-${day.padStart(2, "0")}`
+      }
+
+      return {
+        id: c.dirty_job_id.toString(),
+
+        // Core
+        branch_prefix: c.branch_prefix_valid ? c.branch_prefix?.toString() : d.branch_prefix,
+        type_prefix: c.type_prefix_valid ? c.type_prefix?.toString() : d.type_prefix,
+        job_suffix: c.job_suffix_valid ? c.job_suffix : d.job_suffix,
+        combined_job_number: c.combined_job_number || d.combined_job_number,
+
+        job_number: d.job_number || "",
+        bid_number: c.bid_number_valid ? c.bid_number?.toString() : d.bid_number,
+
+        job_location: c.job_location || d.job_location,
+        contractor: c.contractor || d.contractor,
+
+        rate: c.rate_valid ? c.rate?.toFixed(2) : d.rate,
+        fringe: c.fringe_valid ? c.fringe?.toFixed(2) : d.fringe,
+        is_rated: c.is_rated_valid ? (c.is_rated ? "y" : "n") : d.is_rated,
+
+        start_date: c.start_date_valid ? c.start_date : toDate(d.start_date),
+        end_date: c.end_date_valid ? c.end_date : toDate(d.end_date),
+
+        type: c.type_valid ? c.type : d.type?.toLowerCase(),
+        office: c.office_valid ? c.office : d.office?.toLowerCase(),
+        pm: c.pm_valid ? c.pm : d.pm?.trim(),
+        job_status: c.job_status_valid ? c.job_status : d.job_status?.trim(),
+
+        // Validation flags
+        branch_prefix_valid: c.branch_prefix_valid,
+        type_prefix_valid: c.type_prefix_valid,
+        job_suffix_valid: c.job_suffix_valid,
+        bid_number_valid: c.bid_number_valid,
+        rate_valid: c.rate_valid,
+        fringe_valid: c.fringe_valid,
+        is_rated_valid: c.is_rated_valid,
+        start_date_valid: c.start_date_valid,
+        end_date_valid: c.end_date_valid,
+        type_valid: c.type_valid,
+        office_valid: c.office_valid,
+        pm_valid: c.pm_valid,
+        job_status_valid: c.job_status_valid,
+        fully_validated: c.fully_validated,
+      }
+    })
 
     setJobs(jobs)
     calculateValidationIssues(jobs)
   } catch (error) {
-    console.error("Failed to fetch real jobs:", error)
+    console.error("Failed to fetch jobs:", error)
   } finally {
     setLoading(false)
   }
