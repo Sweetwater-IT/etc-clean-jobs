@@ -1,4 +1,3 @@
-// src/components/job-edit-dialog.tsx
 "use client"
 
 import { useState } from "react"
@@ -22,40 +21,91 @@ export function JobEditDialog({ job, onClose, onSave, highlightField }: JobEditD
   const [formData, setFormData] = useState<Job>(job)
   const [saving, setSaving] = useState(false)
 
-  async function handleSubmit(e: React.FormEvent) {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
     setSaving(true)
     await onSave(formData)
     setSaving(false)
   }
 
-  function updateField(field: keyof Job, value: string) {
-    setFormData((prev) => ({ ...prev, [field]: value }))
+  const updateField = (field: keyof Job, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }))
   }
 
   const isHighlighted = (field: string) => field === highlightField
 
+  const fieldRow = (field: keyof Job, label: string, current: string, input: React.ReactNode) => (
+    <div className={`space-y-2 ${isHighlighted(field) ? "ring-2 ring-orange-400 rounded-lg p-4 bg-orange-50" : ""}`}>
+      <Label className="text-base font-semibold">{label}</Label>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <p className="text-xs text-muted-foreground mb-1">Current</p>
+          <div className="p-3 bg-muted rounded-md text-sm font-mono min-h-[44px] flex items-center">
+            {current || <span className="text-red-500">— empty —</span>}
+          </div>
+        </div>
+        <div>
+          <p className="text-xs text-muted-foreground mb-1">New</p>
+          {input}
+        </div>
+      </div>
+    </div>
+  )
+
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Edit Job Record</DialogTitle>
+          <DialogTitle>Edit Job #{job.combined_job_number || job.id}</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-2 gap-6">
-            {/* Job Number */}
-            <div className={isHighlighted("job_number") ? "ring-2 ring-orange-500 rounded-lg p-4" : ""}>
-              <Label>Job Number</Label>
-              <Input value={formData.combined_job_number || ""} disabled />
-            </div>
 
-            {/* PM */}
-            <div className={isHighlighted("pm") ? "ring-2 ring-orange-500 rounded-lg p-4" : ""}>
-              <Label>Project Manager</Label>
-              <Select value={formData.pm} onValueChange={(v) => updateField("pm", v)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
+        <form onSubmit={handleSave} className="space-y-6">
+          <div className="grid gap-6">
+            {fieldRow("job_number", "Job Number", job.combined_job_number || "", <Input value={formData.combined_job_number || ""} disabled />)}
+            {fieldRow("bid_number", "Bid Number", job.bid_number || "", <Input value={formData.bid_number || ""} onChange={e => updateField("bid_number", e.target.value)} />)}
+            {fieldRow("job_location", "Job Location", job.job_location, <Textarea rows={2} value={formData.job_location} onChange={e => updateField("job_location", e.target.value)} />)}
+            {fieldRow("contractor", "Contractor", job.contractor, <Input value={formData.contractor} onChange={e => updateField("contractor", e.target.value)} />)}
+
+            {fieldRow("rate", "Rate", job.rate || "", <Input type="number" step="0.01" value={formData.rate || ""} onChange={e => updateField("rate", e.target.value)} />)}
+            {fieldRow("fringe", "Fringe", job.fringe || "", <Input type="number" step="0.01" value={formData.fringe || ""} onChange={e => updateField("fringe", e.target.value)} />)}
+
+            {fieldRow("is_rated", "Is Rated", job.is_rated === "y" ? "Yes" : "No", (
+              <Select value={formData.is_rated === "y" ? "y" : "n"} onValueChange={v => updateField("is_rated", v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="y">Yes</SelectItem>
+                  <SelectItem value="n">No</SelectItem>
+                </SelectContent>
+              </Select>
+            ))}
+
+            {fieldRow("start_date", "Start Date", job.start_date || "", <Input type="date" value={formData.start_date || ""} onChange={e => updateField("start_date", e.target.value)} />)}
+            {fieldRow("end_date", "End Date", job.end_date || "", <Input type="date" value={formData.end_date || ""} onChange={e => updateField("end_date", e.target.value)} />)}
+
+            {fieldRow("type", "Type", job.type, (
+              <Select value={formData.type} onValueChange={v => updateField("type", v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="public">Public</SelectItem>
+                  <SelectItem value="private">Private</SelectItem>
+                </SelectContent>
+              </Select>
+            ))}
+
+            {fieldRow("office", "Office", job.office, (
+              <Select value={formData.office} onValueChange={v => updateField("office", v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="hatfield">Hatfield</SelectItem>
+                  <SelectItem value="bedford">Bedford</SelectItem>
+                  <SelectItem value="turbotville">Turbotville</SelectItem>
+                </SelectContent>
+              </Select>
+            ))}
+
+            {fieldRow("pm", "Project Manager", job.pm, (
+              <Select value={formData.pm} onValueChange={v => updateField("pm", v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="John Nelson">John Nelson</SelectItem>
                   <SelectItem value="Larry Long">Larry Long</SelectItem>
@@ -63,93 +113,18 @@ export function JobEditDialog({ job, onClose, onSave, highlightField }: JobEditD
                   <SelectItem value="Jim Redden">Jim Redden</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
+            ))}
 
-            {/* Office */}
-            <div className={isHighlighted("office") ? "ring-2 ring-orange-500 rounded-lg p-4" : ""}>
-              <Label>Office</Label>
-              <Select value={formData.office} onValueChange={(v) => updateField("office", v)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="hatfield">Hatfield</SelectItem>
-                  <SelectItem value="bedford">Bedford</SelectItem>
-                  <SelectItem value="turbotville">Turbotville</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Type */}
-            <div className={isHighlighted("type") ? "ring-2 ring-orange-500 rounded-lg p-4" : ""}>
-              <Label>Type</Label>
-              <Select value={formData.type} onValueChange={(v) => updateField("type", v)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="public">Public</SelectItem>
-                  <SelectItem value="private">Private</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Job Status */}
-            <div className={isHighlighted("job_status") ? "ring-2 ring-orange-500 rounded-lg p-4" : ""}>
-              <Label>Job Status</Label>
-              <Select value={formData.job_status} onValueChange={(v) => updateField("job_status", v)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
+            {fieldRow("job_status", "Job Status", job.job_status, (
+              <Select value={formData.job_status} onValueChange={v => updateField("job_status", v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="ongoing">Ongoing</SelectItem>
                   <SelectItem value="not started">Not Started</SelectItem>
                   <SelectItem value="complete">Complete</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-
-            {/* Rate */}
-            <div className={isHighlighted("rate") ? "ring-2 ring-orange-500 rounded-lg p-4" : ""}>
-              <Label>Rate</Label>
-              <Input
-                type="number"
-                step="0.01"
-                value={formData.rate || ""}
-                onChange={(e) => updateField("rate", e.target.value)}
-              />
-            </div>
-
-            {/* Fringe */}
-            <div className={isHighlighted("fringe") ? "ring-2 ring-orange-500 rounded-lg p-4" : ""}>
-              <Label>Fringe</Label>
-              <Input
-                type="number"
-                step="0.01"
-                value={formData.fringe || ""}
-                onChange={(e) => updateField("fringe", e.target.value)}
-              />
-            </div>
-
-            {/* Start Date */}
-            <div className={isHighlighted("start_date") ? "ring-2 ring-orange-500 rounded-lg p-4" : ""}>
-              <Label>Start Date</Label>
-              <Input
-                type="date"
-                value={formData.start_date || ""}
-                onChange={(e) => updateField("start_date", e.target.value)}
-              />
-            </div>
-
-            {/* End Date */}
-            <div className={isHighlighted("end_date") ? "ring-2 ring-orange-500 rounded-lg p-4" : ""}>
-              <Label>End Date</Label>
-              <Input
-                type="date"
-                value={formData.end_date || ""}
-                onChange={(e) => updateField("end_date", e.target.value)}
-              />
-            </div>
+            ))}
           </div>
 
           <DialogFooter>
