@@ -90,8 +90,9 @@ useEffect(() => {
           branch_prefix: c.branch_prefix ?? d.branch_prefix,
           type_prefix: c.type_prefix ?? d.type_prefix,
           job_suffix: c.job_suffix ?? d.job_suffix,
-          combined_job_number: c.combined_job_number ?? d.combined_job_number,
-          job_number: d.job_number || "",
+          combined_job_number: isJobNumberValid 
+          ? c.combined_job_number 
+          : d.combined_job_number || "",
           bid_number: c.bid_number ?? d.bid_number,
           job_location: c.job_location || d.job_location || "",
           contractor: c.contractor || d.contractor || "",
