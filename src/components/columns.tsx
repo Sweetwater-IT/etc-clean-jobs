@@ -30,7 +30,7 @@ export const columns: ColumnDef<Job>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: "job_number",
+    accessorKey: "combined_job_number",
     header: ({ column }) => {
       return (
         <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
