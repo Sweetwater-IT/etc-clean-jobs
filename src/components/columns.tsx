@@ -39,7 +39,7 @@ export const columns: ColumnDef<Job>[] = [
         </Button>
       )
     },
-    cell: ({ row }) => <div className="font-medium">{row.getValue("job_number")}</div>,
+    cell: ({ row }) => <div className="font-medium">{row.getValue("combined_job_number")}</div>,
   },
   {
     accessorKey: "job_location",
