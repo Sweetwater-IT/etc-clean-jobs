@@ -57,42 +57,47 @@ useEffect(() => {
   async function fetchJobs() {
     setLoading(true)
     try {
-      const { data, error } = await supabase
+      // Get ALL dirty jobs first — this guarantees we have 450 rows
+      const { data: dirtyData, error: dirtyError } = await supabase
+        .from("etc_dirty_jobs")
+        .select("*")
+        .order("id", { ascending: true })
+  
+      if (dirtyError) throw dirtyError
+      if (!dirtyData || dirtyData.length === 0) {
+        setJobs([])
+        setLoading(false)
+        return
+      }
+  
+      // Get clean rows (may be missing for some)
+      const { data: cleanData } = await supabase
         .from("etc_clean_jobs")
-        .select(`
-          *,
-          dirty:etc_dirty_jobs!dirty_job_id (*)
-        `)
-        .order("dirty_job_id", { ascending: true })
+        .select("*")
+        .in("dirty_job_id", dirtyData.map(d => d.id))
   
-      if (error) throw error
+      // Map clean rows for fast lookup
+      const cleanMap = Object.fromEntries(
+        (cleanData || []).map(c => [c.dirty_job_id, c])
+      )
   
-      const mappedJobs = data.map((row: any) => {
-        const c = row
-        const d = row.dirty || {}
+      const jobs = dirtyData.map(d => {
+        const c = cleanMap[d.id] || {}
   
-        // Convert dirty M/D/YYYY → YYYY-MM-DD
-        const toDate = (dirtyDate: string | null) => {
-          if (!dirtyDate?.trim()) return null
-          const [m, day, y] = dirtyDate.split("/")
+        const toDate = (s: string | null) => {
+          if (!s?.trim()) return null
+          const [m, day, y] = s.split("/")
           return `${y}-${m.padStart(2, "0")}-${day.padStart(2, "0")}`
         }
   
-        // Is the job number fully valid in clean table?
         const isJobNumberValid = 
           c.branch_prefix_valid && 
           c.type_prefix_valid && 
           c.job_suffix_valid
   
         return {
-          id: c.dirty_job_id?.toString() || "0",
-  
-          // JOB NUMBER — clean if valid, otherwise dirty
-          combined_job_number: isJobNumberValid 
-            ? c.combined_job_number 
-            : d.combined_job_number || "",
-  
-          // Core fields
+          id: d.id.toString(),
+          combined_job_number: isJobNumberValid ? c.combined_job_number : d.combined_job_number || "",
           branch_prefix: c.branch_prefix_valid ? c.branch_prefix?.toString() : d.branch_prefix || "",
           type_prefix: c.type_prefix_valid ? c.type_prefix?.toString() : d.type_prefix || "",
           job_suffix: c.job_suffix_valid ? c.job_suffix : d.job_suffix || "",
@@ -103,10 +108,8 @@ useEffect(() => {
           rate: c.rate_valid ? c.rate?.toFixed(2) : d.rate || "",
           fringe: c.fringe_valid ? c.fringe?.toFixed(2) : d.fringe || "",
           is_rated: c.is_rated_valid ? (c.is_rated ? "y" : "n") : d.is_rated || "n",
-  
           start_date: c.start_date_valid ? c.start_date : toDate(d.start_date),
           end_date: c.end_date_valid ? c.end_date : toDate(d.end_date),
-  
           type: c.type_valid ? c.type : d.type?.toLowerCase() || "",
           office: c.office_valid ? c.office : d.office?.toLowerCase() || "",
           pm: c.pm_valid ? c.pm : d.pm?.trim() || "",
@@ -126,12 +129,12 @@ useEffect(() => {
           office_valid: !!c.office_valid,
           pm_valid: !!c.pm_valid,
           job_status_valid: !!c.job_status_valid,
-          fully_validated: c.fully_validated === true,
+          fully_validated: !!c.fully_validated,
         }
       })
   
-      setJobs(mappedJobs)
-      calculateValidationIssues(mappedJobs)
+      setJobs(jobs)
+      calculateValidationIssues(jobs)
     } catch (error) {
       console.error("Failed to fetch jobs:", error)
     } finally {
